@@ -4,6 +4,11 @@
 (function () {
   const store = createStore();
 
+  // --- 首次用户交互时解锁移动端音频 ---
+  const unlockOnce = () => { sound.unlock(); document.removeEventListener('click', unlockOnce); document.removeEventListener('touchstart', unlockOnce); };
+  document.addEventListener('click', unlockOnce);
+  document.addEventListener('touchstart', unlockOnce);
+
   // --- 加载用户设置 ---
   const settings = db.getSettings();
   applySettings(settings);
@@ -37,7 +42,7 @@
 
   function onPhaseComplete() {
     const state = store.get();
-    if (SOUND_ENABLED) playBeep();
+    sound.play(SOUND_CHOICE);
 
     if (state.status === 'focus') {
       const newCycle = state.cycleCount + 1;
@@ -138,7 +143,7 @@
     if (elapsed > 0) {
       db.addRecord(store.get('currentTaskId'), elapsed);
       refreshStats();
-      if (SOUND_ENABLED) playBeep();
+      sound.play(SOUND_CHOICE);
     }
   }
 
@@ -187,7 +192,7 @@
       short_break: parseInt($('#set-short').value) || 5,
       long_break: parseInt($('#set-long').value) || 15,
       cycle_length: parseInt($('#set-cycle').value) || 4,
-      sound_enabled: parseInt($('#set-sound').value),
+      sound: $('#set-sound').value,
     };
 
     db.saveSettings(payload);
@@ -203,6 +208,11 @@
 
     document.getElementById('btn-save-settings').textContent = '已保存 ✓';
     setTimeout(() => { document.getElementById('btn-save-settings').textContent = '保存设置'; }, 1500);
+  });
+
+  // --- 试听按钮 ---
+  document.getElementById('btn-preview-sound').addEventListener('click', () => {
+    sound.play($('#set-sound').value);
   });
 
   // ===================== 数据刷新 =====================

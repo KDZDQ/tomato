@@ -7,7 +7,7 @@ let DURATIONS = DEBUG
   ? { focus: 5, short_break: 3, long_break: 4 }
   : { focus: 25 * 60, short_break: 5 * 60, long_break: 15 * 60 };
 let CYCLE_LENGTH = 4;
-let SOUND_ENABLED = true;
+let SOUND_CHOICE = 'ding';
 
 /** 用设置对象更新计时配置（分钟 -> 秒） */
 function applySettings(s) {
@@ -20,7 +20,7 @@ function applySettings(s) {
     };
   }
   CYCLE_LENGTH = s.cycle_length || 4;
-  SOUND_ENABLED = s.sound_enabled !== 0;
+  SOUND_CHOICE = s.sound || 'ding';
 }
 
 const STATUS_LABELS = {

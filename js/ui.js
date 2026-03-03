@@ -109,7 +109,17 @@ function renderSettingsForm(s) {
   $('#set-short').value = s.short_break || 5;
   $('#set-long').value = s.long_break || 15;
   $('#set-cycle').value = s.cycle_length || 4;
-  $('#set-sound').value = s.sound_enabled ?? 1;
+
+  const sel = $('#set-sound');
+  if (!sel.options.length) {
+    sound.list().forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.label;
+      sel.appendChild(opt);
+    });
+  }
+  sel.value = s.sound || 'ding';
 }
 
 function applyTheme(dark) {

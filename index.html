@@ -72,10 +72,10 @@
           <label>循环次数</label>
           <input type="number" id="set-cycle" min="1" max="10" value="4">
           <label>提示音</label>
-          <select id="set-sound">
-            <option value="1">开启</option>
-            <option value="0">静音</option>
-          </select>
+          <div class="sound-picker">
+            <select id="set-sound"></select>
+            <button type="button" class="btn-icon" id="btn-preview-sound" title="试听">&#9654;</button>
+          </div>
           <label>深色模式</label>
           <select id="set-theme">
             <option value="0">浅色</option>

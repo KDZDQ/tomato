@@ -265,3 +265,19 @@ header h1 { font-size: 1.4rem; }
 }
 
 .settings-grid input[type="number"] { width: 100%; }
+
+.sound-picker {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.sound-picker select { flex: 1; }
+
+.sound-picker .btn-icon {
+  font-size: 1rem;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
