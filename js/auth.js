@@ -47,11 +47,7 @@ async function handleLogin() {
         if (probe.data && probe.data.user && probe.data.user.identities && probe.data.user.identities.length === 0) {
           showMsg('login-error', '密码错误，请重新输入');
         } else {
-          showMsg('login-error', '该邮箱尚未注册，正在为您跳转到注册页面...');
-          setTimeout(function () {
-            showView('register');
-            document.getElementById('reg-email').value = email;
-          }, 1500);
+          showMsg('login-error', '该邮箱尚未注册，已自动为您发送验证邮件到 ' + email + '，请前往邮箱点击验证链接，然后回来登录。');
         }
       } else {
         showMsg('login-error', msg);
