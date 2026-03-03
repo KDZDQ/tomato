@@ -20,12 +20,14 @@
       <p class="login-subtitle">登录或注册以云端同步你的数据</p>
       <div class="auth-error" id="auth-error"></div>
       <div class="auth-success" id="auth-success"></div>
-      <form id="auth-form">
+      <form id="auth-form" autocomplete="on">
         <input type="email" id="auth-email" placeholder="邮箱地址" required autocomplete="email">
         <input type="password" id="auth-pass" placeholder="密码（至少6位）" required minlength="6" autocomplete="current-password">
-        <button type="submit" class="btn primary" id="btn-auth" style="width:100%">登录</button>
+        <div class="login-actions">
+          <button type="submit" class="btn primary" id="btn-login">登录</button>
+          <button type="button" class="btn" id="btn-register">注册新账号</button>
+        </div>
       </form>
-      <p class="auth-switch" id="auth-switch">没有账号？<a href="#" id="link-to-register">点击注册</a></p>
     </div>
   </div>
 
