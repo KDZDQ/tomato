@@ -7,6 +7,8 @@
   document.addEventListener('click', unlockOnce);
   document.addEventListener('touchstart', unlockOnce);
 
+  let authFormBound = false;
+
   if (typeof supa === 'undefined') {
     showAuthError('无法连接到服务器，请刷新页面重试');
     return;
@@ -32,8 +34,6 @@
   });
 
   // ===================== 认证表单 =====================
-
-  let authFormBound = false;
 
   function initAuthForm() {
     if (authFormBound) return;
