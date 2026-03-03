@@ -14,8 +14,7 @@ function formatDuration(sec) {
 }
 
 /**
- * 声音播放器 —— 解决移动端 AudioContext 限制
- * 在用户首次点击时解锁，之后可随时播放
+ * 声音播放器
  */
 const sound = (() => {
   let ctx = null;
@@ -25,7 +24,6 @@ const sound = (() => {
     return ctx;
   }
 
-  /** 必须在用户交互（click/touchstart）中调用，解锁移动端音频 */
   function unlock() {
     const c = getCtx();
     if (c.state === 'suspended') c.resume();
@@ -50,61 +48,24 @@ const sound = (() => {
   }
 
   const SOUNDS = {
-    /** 清脆短响 */
-    ding(c) {
-      _tone(880, 0.3, c.currentTime, 0.3);
-    },
-    /** 柔和双音 */
-    gentle(c) {
-      _tone(523, 0.25, c.currentTime, 0.2);
-      _tone(659, 0.3, c.currentTime + 0.2, 0.2);
-    },
-    /** 三连响 */
-    triple(c) {
-      for (let i = 0; i < 3; i++) {
-        _tone(784, 0.15, c.currentTime + i * 0.22, 0.25);
-      }
-    },
-    /** 上升和弦 */
-    chime(c) {
-      [523, 659, 784, 1047].forEach((f, i) => {
-        _tone(f, 0.3, c.currentTime + i * 0.15, 0.18);
-      });
-    },
-    /** 闹铃（急促） */
-    alarm(c) {
-      for (let i = 0; i < 6; i++) {
-        _tone(i % 2 ? 980 : 780, 0.1, c.currentTime + i * 0.14, 0.3);
-      }
-    },
-    /** 木琴 */
-    xylophone(c) {
-      [1047, 1319, 1568].forEach((f, i) => {
-        _tone(f, 0.4, c.currentTime + i * 0.18, 0.15);
-      });
-    },
+    ding(c) { _tone(880, 0.3, c.currentTime, 0.3); },
+    gentle(c) { _tone(523, 0.25, c.currentTime, 0.2); _tone(659, 0.3, c.currentTime + 0.2, 0.2); },
+    triple(c) { for (let i = 0; i < 3; i++) _tone(784, 0.15, c.currentTime + i * 0.22, 0.25); },
+    chime(c) { [523, 659, 784, 1047].forEach((f, i) => _tone(f, 0.3, c.currentTime + i * 0.15, 0.18)); },
+    alarm(c) { for (let i = 0; i < 6; i++) _tone(i % 2 ? 980 : 780, 0.1, c.currentTime + i * 0.14, 0.3); },
+    xylophone(c) { [1047, 1319, 1568].forEach((f, i) => _tone(f, 0.4, c.currentTime + i * 0.18, 0.15)); },
   };
 
-  /** 播放指定铃声 */
   function play(name) {
     if (!name || name === 'off') return;
-    try {
-      const c = getCtx();
-      if (c.state === 'suspended') c.resume();
-      const fn = SOUNDS[name] || SOUNDS.ding;
-      fn(c);
-    } catch (_) {}
+    try { const c = getCtx(); if (c.state === 'suspended') c.resume(); (SOUNDS[name] || SOUNDS.ding)(c); } catch (_) {}
   }
 
-  /** 返回可用铃声列表 [{id, label}] */
   function list() {
     return [
-      { id: 'ding', label: '清脆短响' },
-      { id: 'gentle', label: '柔和双音' },
-      { id: 'triple', label: '三连响' },
-      { id: 'chime', label: '上升和弦' },
-      { id: 'alarm', label: '急促闹铃' },
-      { id: 'xylophone', label: '木琴' },
+      { id: 'ding', label: '清脆短响' }, { id: 'gentle', label: '柔和双音' },
+      { id: 'triple', label: '三连响' }, { id: 'chime', label: '上升和弦' },
+      { id: 'alarm', label: '急促闹铃' }, { id: 'xylophone', label: '木琴' },
       { id: 'off', label: '静音' },
     ];
   }
@@ -112,60 +73,56 @@ const sound = (() => {
   return { unlock, play, list };
 })();
 
-/** localStorage 数据层 */
+/** Supabase 数据层 —— 所有方法均为 async */
 const db = {
-  _get(key, def) { return JSON.parse(localStorage.getItem(key) || JSON.stringify(def)); },
-  _set(key, val) { localStorage.setItem(key, JSON.stringify(val)); },
-
-  getTasks() { return this._get('tomato_tasks', []); },
-
-  addTask(name, estimated) {
-    const tasks = this.getTasks();
-    const id = this._get('tomato_next_id', 1);
-    this._set('tomato_next_id', id + 1);
-    const task = { id, name, estimated: estimated || 1, completed: 0 };
-    tasks.unshift(task);
-    this._set('tomato_tasks', tasks);
-    return task;
+  async getTasks() {
+    const { data } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
+    return data || [];
   },
 
-  deleteTask(id) {
-    this._set('tomato_tasks', this.getTasks().filter(t => t.id !== id));
+  async addTask(name, estimated) {
+    const { data } = await supabase.from('tasks').insert({ name, estimated: estimated || 1 }).select().single();
+    return data;
   },
 
-  incrementPomodoro(id) {
-    const tasks = this.getTasks();
-    const t = tasks.find(t => t.id === id);
-    if (t) t.completed++;
-    this._set('tomato_tasks', tasks);
+  async deleteTask(id) {
+    await supabase.from('tasks').delete().eq('id', id);
   },
 
-  addRecord(taskId, duration) {
-    const records = this._get('tomato_records', []);
-    records.push({ task_id: taskId, duration, completed_at: new Date().toISOString() });
-    this._set('tomato_records', records);
+  async incrementPomodoro(id) {
+    const { data: task } = await supabase.from('tasks').select('completed').eq('id', id).single();
+    if (task) await supabase.from('tasks').update({ completed: task.completed + 1 }).eq('id', id);
   },
 
-  getStats() {
-    const records = this._get('tomato_records', []);
+  async addRecord(taskId, duration) {
+    await supabase.from('records').insert({ task_id: taskId, duration });
+  },
+
+  async getStats() {
+    const { data: records } = await supabase.from('records').select('duration, completed_at');
+    const all = records || [];
     const today = new Date().toISOString().slice(0, 10);
-    const todayRecords = records.filter(r => r.completed_at.slice(0, 10) === today);
+    const todayRecords = all.filter(r => r.completed_at && r.completed_at.slice(0, 10) === today);
     return {
       todayFocusTime: todayRecords.reduce((s, r) => s + r.duration, 0),
       todayCount: todayRecords.length,
-      totalCount: records.length,
+      totalCount: all.length,
     };
   },
 
-  getSettings() {
-    return this._get('tomato_settings', {
-      focus_duration: 25, short_break: 5, long_break: 15,
-      cycle_length: 4, sound: 'ding',
-    });
+  async getSettings() {
+    const { data } = await supabase.from('settings').select('*').single();
+    if (data) return data;
+    const defaults = { focus_duration: 25, short_break: 5, long_break: 15, cycle_length: 4, sound: 'ding' };
+    await supabase.from('settings').insert(defaults);
+    return defaults;
   },
 
-  saveSettings(s) {
-    this._set('tomato_settings', s);
-    return s;
+  async saveSettings(s) {
+    const { data } = await supabase.from('settings').upsert({
+      user_id: (await supabase.auth.getUser()).data.user.id,
+      ...s,
+    }).select().single();
+    return data || s;
   },
 };

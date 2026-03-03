@@ -1,9 +1,10 @@
-const CACHE_NAME = 'tomato-v2';
+const CACHE_NAME = 'tomato-v3';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './manifest.json',
+  './js/supabase-config.js',
   './js/utils.js',
   './js/timer.js',
   './js/state.js',
@@ -27,6 +28,11 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  const url = e.request.url;
+  if (url.includes('supabase.co') || url.includes('cdn.jsdelivr.net')) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );

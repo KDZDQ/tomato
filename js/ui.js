@@ -10,7 +10,6 @@ function renderTimer(seconds) {
 function renderStatus(state) {
   const label = $('#status-label');
   const labels = STATUS_LABELS[state.mode] || STATUS_LABELS.pomodoro;
-
   if (state.mode === 'stopwatch') {
     label.textContent = labels[state.status] || '';
     label.className = 'status-label' + (state.status === 'focus' ? ' stopwatch' : '');
@@ -36,22 +35,18 @@ function renderDots(state) {
 function renderControls(state) {
   const { status, prevStatus, mode } = state;
   if (mode === 'stopwatch') { renderStopwatchControls(status); return; }
-
   const isRunning = ['focus', 'short_break', 'long_break'].includes(status);
   const isPaused = status === 'paused';
   const phaseClass = isPaused ? (prevStatus || 'focus') : status;
-
   let html = '';
   if (status === 'idle') {
     html = `<button class="btn primary" id="btn-start">开始专注</button>`;
   } else if (isRunning) {
-    html = `
-      <button class="btn" id="btn-pause">暂停</button>
+    html = `<button class="btn" id="btn-pause">暂停</button>
       <button class="btn" id="btn-skip">跳过</button>
       <button class="btn danger" id="btn-reset">重置</button>`;
   } else if (isPaused) {
-    html = `
-      <button class="btn primary ${phaseClass}" id="btn-resume">恢复</button>
+    html = `<button class="btn primary ${phaseClass}" id="btn-resume">恢复</button>
       <button class="btn" id="btn-skip">跳过</button>
       <button class="btn danger" id="btn-reset">重置</button>`;
   }
@@ -63,12 +58,10 @@ function renderStopwatchControls(status) {
   if (status === 'idle') {
     html = `<button class="btn primary sw" id="btn-sw-start">开始计时</button>`;
   } else if (status === 'focus') {
-    html = `
-      <button class="btn" id="btn-sw-pause">暂停</button>
+    html = `<button class="btn" id="btn-sw-pause">暂停</button>
       <button class="btn danger" id="btn-sw-stop">停止并记录</button>`;
   } else if (status === 'paused') {
-    html = `
-      <button class="btn primary sw" id="btn-sw-resume">恢复</button>
+    html = `<button class="btn primary sw" id="btn-sw-resume">恢复</button>
       <button class="btn danger" id="btn-sw-stop">停止并记录</button>`;
   }
   $('#controls').innerHTML = html;
@@ -109,7 +102,6 @@ function renderSettingsForm(s) {
   $('#set-short').value = s.short_break || 5;
   $('#set-long').value = s.long_break || 15;
   $('#set-cycle').value = s.cycle_length || 4;
-
   const sel = $('#set-sound');
   if (!sel.options.length) {
     sound.list().forEach(item => {
@@ -120,6 +112,21 @@ function renderSettingsForm(s) {
     });
   }
   sel.value = s.sound || 'ding';
+}
+
+function renderAuthModal(show) {
+  $('#auth-modal').style.display = show ? 'flex' : 'none';
+  $('#app').style.display = show ? 'none' : 'block';
+}
+
+function renderUserInfo(email) {
+  $('#header-user').textContent = email || '';
+}
+
+function showAuthError(msg) {
+  const el = $('#auth-error');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
 }
 
 function applyTheme(dark) {
