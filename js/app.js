@@ -7,25 +7,36 @@
   document.addEventListener('click', unlockOnce);
   document.addEventListener('touchstart', unlockOnce);
 
-  // --- 认证检查 ---
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    renderAuthModal(true);
-    initAuthForm();
+  if (!supabase) {
+    showAuthError('无法连接到服务器，请刷新页面重试');
     return;
   }
-  await bootApp(session.user);
 
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_OUT') {
+  // --- 认证检查 ---
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await bootApp(session.user);
+    } else {
       renderAuthModal(true);
       initAuthForm();
     }
+  } catch (e) {
+    console.error('Auth check failed:', e);
+    renderAuthModal(true);
+    initAuthForm();
+  }
+
+  supabase.auth.onAuthStateChange(async (event) => {
+    if (event === 'SIGNED_OUT') window.location.reload();
   });
 
   // ===================== 认证表单 =====================
 
+  let authFormBound = false;
   function initAuthForm() {
+    if (authFormBound) return;
+    authFormBound = true;
     document.getElementById('auth-form').addEventListener('submit', (e) => {
       e.preventDefault();
       doAuth('login');
@@ -39,22 +50,25 @@
     const password = document.getElementById('auth-pass').value;
     if (!email || !password) return showAuthError('请输入邮箱和密码');
 
-    let result;
-    if (action === 'register') {
-      result = await supabase.auth.signUp({ email, password });
-    } else {
-      result = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      let result;
+      if (action === 'register') {
+        result = await supabase.auth.signUp({ email, password });
+      } else {
+        result = await supabase.auth.signInWithPassword({ email, password });
+      }
+
+      if (result.error) return showAuthError(result.error.message);
+
+      if (action === 'register' && !result.data.session) {
+        showAuthError('注册成功！请查收验证邮件后再登录。');
+        return;
+      }
+
+      await bootApp(result.data.user);
+    } catch (e) {
+      showAuthError('网络错误，请重试');
     }
-
-    if (result.error) return showAuthError(result.error.message);
-
-    if (action === 'register' && !result.data.session) {
-      showAuthError('注册成功！请查收验证邮件后再登录。');
-      return;
-    }
-
-    renderAuthModal(false);
-    await bootApp(result.data.user);
   }
 
   // ===================== 启动应用 =====================
@@ -65,7 +79,12 @@
 
     const store = createStore();
 
-    const settings = await db.getSettings();
+    let settings;
+    try {
+      settings = await db.getSettings();
+    } catch (e) {
+      settings = { focus_duration: 25, short_break: 5, long_break: 15, cycle_length: 4, sound: 'ding' };
+    }
     applySettings(settings);
     renderSettingsForm(settings);
 
@@ -98,8 +117,10 @@
 
       if (state.status === 'focus') {
         const newCycle = state.cycleCount + 1;
-        await db.addRecord(state.currentTaskId, DURATIONS.focus);
-        if (state.currentTaskId) await db.incrementPomodoro(state.currentTaskId);
+        try {
+          await db.addRecord(state.currentTaskId, DURATIONS.focus);
+          if (state.currentTaskId) await db.incrementPomodoro(state.currentTaskId);
+        } catch (_) {}
         await refreshTasks();
         await refreshStats();
 
@@ -169,7 +190,7 @@
       store.set({ status: 'idle' });
       renderTimer(0);
       if (elapsed > 0) {
-        await db.addRecord(store.get('currentTaskId'), elapsed);
+        try { await db.addRecord(store.get('currentTaskId'), elapsed); } catch (_) {}
         await refreshStats();
         sound.play(SOUND_CHOICE);
       }
@@ -220,7 +241,7 @@
         cycle_length: parseInt($('#set-cycle').value) || 4,
         sound: $('#set-sound').value,
       };
-      await db.saveSettings(payload);
+      try { await db.saveSettings(payload); } catch (_) {}
       applySettings(payload);
       const dark = $('#set-theme').value === '1';
       store.set({ darkMode: dark });
@@ -245,17 +266,19 @@
     document.getElementById('btn-logout').addEventListener('click', async () => {
       timer.stop();
       await supabase.auth.signOut();
-      window.location.reload();
     });
 
     // --- 数据刷新 ---
     async function refreshTasks() {
-      const tasks = await db.getTasks();
-      renderTasks(tasks, store.get('currentTaskId'));
+      try {
+        const tasks = await db.getTasks();
+        renderTasks(tasks, store.get('currentTaskId'));
+      } catch (_) { renderTasks([], null); }
     }
 
     async function refreshStats() {
-      renderStats(await db.getStats());
+      try { renderStats(await db.getStats()); }
+      catch (_) { renderStats({ todayFocusTime: 0, todayCount: 0, totalCount: 0 }); }
     }
   }
 })();
