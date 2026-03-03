@@ -7,14 +7,14 @@
   document.addEventListener('click', unlockOnce);
   document.addEventListener('touchstart', unlockOnce);
 
-  if (!supabase) {
+  if (typeof supa === 'undefined') {
     showAuthError('无法连接到服务器，请刷新页面重试');
     return;
   }
 
   // --- 认证检查 ---
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supa.auth.getSession();
     if (session) {
       await bootApp(session.user);
     } else {
@@ -27,7 +27,7 @@
     initAuthForm();
   }
 
-  supabase.auth.onAuthStateChange(async (event) => {
+  supa.auth.onAuthStateChange(async (event) => {
     if (event === 'SIGNED_OUT') window.location.reload();
   });
 
@@ -61,7 +61,7 @@
     btn.disabled = true;
 
     try {
-      const result = await supabase.auth.signInWithPassword({ email, password });
+      const result = await supa.auth.signInWithPassword({ email, password });
       if (result.error) {
         if (result.error.message.includes('Invalid login')) {
           showAuthError('邮箱或密码错误。如果是新用户，请点击右侧"注册新账号"');
@@ -94,7 +94,7 @@
     btn.disabled = true;
 
     try {
-      const result = await supabase.auth.signUp({ email, password });
+      const result = await supa.auth.signUp({ email, password });
       if (result.error) {
         if (result.error.message.includes('already registered')) {
           showAuthError('该邮箱已注册，请直接点击"登录"');
@@ -308,7 +308,7 @@
     // --- 退出登录 ---
     document.getElementById('btn-logout').addEventListener('click', async () => {
       timer.stop();
-      await supabase.auth.signOut();
+      await supa.auth.signOut();
     });
 
     // --- 数据刷新 ---

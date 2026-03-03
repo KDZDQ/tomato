@@ -76,30 +76,30 @@ const sound = (() => {
 /** Supabase 数据层 —— 所有方法均为 async */
 const db = {
   async getTasks() {
-    const { data } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
+    const { data } = await supa.from('tasks').select('*').order('created_at', { ascending: false });
     return data || [];
   },
 
   async addTask(name, estimated) {
-    const { data } = await supabase.from('tasks').insert({ name, estimated: estimated || 1 }).select().single();
+    const { data } = await supa.from('tasks').insert({ name, estimated: estimated || 1 }).select().single();
     return data;
   },
 
   async deleteTask(id) {
-    await supabase.from('tasks').delete().eq('id', id);
+    await supa.from('tasks').delete().eq('id', id);
   },
 
   async incrementPomodoro(id) {
-    const { data: task } = await supabase.from('tasks').select('completed').eq('id', id).single();
-    if (task) await supabase.from('tasks').update({ completed: task.completed + 1 }).eq('id', id);
+    const { data: task } = await supa.from('tasks').select('completed').eq('id', id).single();
+    if (task) await supa.from('tasks').update({ completed: task.completed + 1 }).eq('id', id);
   },
 
   async addRecord(taskId, duration) {
-    await supabase.from('records').insert({ task_id: taskId, duration });
+    await supa.from('records').insert({ task_id: taskId, duration });
   },
 
   async getStats() {
-    const { data: records } = await supabase.from('records').select('duration, completed_at');
+    const { data: records } = await supa.from('records').select('duration, completed_at');
     const all = records || [];
     const today = new Date().toISOString().slice(0, 10);
     const todayRecords = all.filter(r => r.completed_at && r.completed_at.slice(0, 10) === today);
@@ -111,16 +111,16 @@ const db = {
   },
 
   async getSettings() {
-    const { data } = await supabase.from('settings').select('*').single();
+    const { data } = await supa.from('settings').select('*').single();
     if (data) return data;
     const defaults = { focus_duration: 25, short_break: 5, long_break: 15, cycle_length: 4, sound: 'ding' };
-    await supabase.from('settings').insert(defaults);
+    await supa.from('settings').insert(defaults);
     return defaults;
   },
 
   async saveSettings(s) {
-    const { data } = await supabase.from('settings').upsert({
-      user_id: (await supabase.auth.getUser()).data.user.id,
+    const { data } = await supa.from('settings').upsert({
+      user_id: (await supa.auth.getUser()).data.user.id,
       ...s,
     }).select().single();
     return data || s;

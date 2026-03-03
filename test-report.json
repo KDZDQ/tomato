@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-03-03T11:25:46.650Z",
+  "url": "https://KDZDQ.github.io/tomato/",
+  "consoleMessages": [
+    "[ERROR] Auth check failed: TypeError: Cannot read properties of undefined (reading 'getSession')\n    at https://kdzdq.github.io/tomato/js/app.js:17:55\n    at https://kdzdq.github.io/tomato/js/app.js:327:3",
+    "[ERROR] Auth check failed: TypeError: Cannot read properties of undefined (reading 'getSession')\n    at https://kdzdq.github.io/tomato/js/app.js:17:55\n    at https://kdzdq.github.io/tomato/js/app.js:327:3"
+  ],
+  "errors": [
+    "[PAGE ERROR] Identifier 'supabase' has already been declared",
+    "[PAGE ERROR] Cannot access 'authFormBound' before initialization",
+    "[PAGE ERROR] Identifier 'supabase' has already been declared",
+    "[PAGE ERROR] Cannot access 'authFormBound' before initialization"
+  ],
+  "screenshots": [
+    "screenshot-1-initial.png",
+    "screenshot-2-filled.png",
+    "screenshot-3-after-login.png"
+  ]
+}
