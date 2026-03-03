@@ -234,6 +234,13 @@
       sound.play($('#set-sound').value);
     });
 
+    // --- 主题切换 ---
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const dark = !store.get('darkMode');
+      store.set({ darkMode: dark });
+      applyTheme(dark);
+    });
+
     // --- 退出登录 ---
     document.getElementById('btn-logout').addEventListener('click', async () => {
       timer.stop();
