@@ -40,10 +40,19 @@ async function handleLogin() {
 
     if (result.error) {
       var msg = result.error.message;
-      if (msg.indexOf('Invalid login') >= 0) {
-        showMsg('login-error', '邮箱或密码错误');
-      } else if (msg.indexOf('Email not confirmed') >= 0) {
+      if (msg.indexOf('Email not confirmed') >= 0) {
         showMsg('login-error', '邮箱尚未验证，请先查收验证邮件并点击链接');
+      } else if (msg.indexOf('Invalid login') >= 0) {
+        var probe = await supa.auth.signUp({ email: email, password: password });
+        if (probe.data && probe.data.user && probe.data.user.identities && probe.data.user.identities.length === 0) {
+          showMsg('login-error', '密码错误，请重新输入');
+        } else {
+          showMsg('login-error', '该邮箱尚未注册，正在为您跳转到注册页面...');
+          setTimeout(function () {
+            showView('register');
+            document.getElementById('reg-email').value = email;
+          }, 1500);
+        }
       } else {
         showMsg('login-error', msg);
       }
