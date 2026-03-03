@@ -1,27 +1,27 @@
-const CACHE_NAME = 'tomato-v7';
+var CACHE_NAME = 'tomato-v8';
 
-self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('install', function () { self.skipWaiting(); });
 
-self.addEventListener('activate', (e) => {
+self.addEventListener('activate', function (e) {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+    caches.keys().then(function (keys) {
+      return Promise.all(keys.filter(function (k) { return k !== CACHE_NAME; }).map(function (k) { return caches.delete(k); }));
+    })
   );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', (e) => {
-  const url = e.request.url;
-  if (url.includes('supabase.co') || url.includes('cdn.jsdelivr.net')) {
+self.addEventListener('fetch', function (e) {
+  var url = e.request.url;
+  if (url.indexOf('supabase.co') >= 0 || url.indexOf('cdn.jsdelivr.net') >= 0) {
     e.respondWith(fetch(e.request));
     return;
   }
   e.respondWith(
-    fetch(e.request).then(res => {
-      const clone = res.clone();
-      caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+    fetch(e.request).then(function (res) {
+      var clone = res.clone();
+      caches.open(CACHE_NAME).then(function (c) { c.put(e.request, clone); });
       return res;
-    }).catch(() => caches.match(e.request))
+    }).catch(function () { return caches.match(e.request); })
   );
 });
