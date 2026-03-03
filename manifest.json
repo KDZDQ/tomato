@@ -1,0 +1,12 @@
+{
+  "name": "番茄时钟",
+  "short_name": "番茄钟",
+  "description": "极简番茄工作法计时器",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f6fa",
+  "theme_color": "#e74c3c",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
