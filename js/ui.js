@@ -129,6 +129,13 @@ function showAuthError(msg) {
   el.style.display = msg ? 'block' : 'none';
 }
 
+function showAuthSuccess(msg) {
+  const el = $('#auth-success');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
 function applyTheme(dark) {
   document.documentElement.setAttribute('data-theme', dark ? 'dark' : '');
   if ($('#set-theme')) $('#set-theme').value = dark ? '1' : '0';

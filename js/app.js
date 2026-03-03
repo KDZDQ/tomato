@@ -34,38 +34,86 @@
   // ===================== 认证表单 =====================
 
   let authFormBound = false;
+  let authMode = 'login';
+
   function initAuthForm() {
     if (authFormBound) return;
     authFormBound = true;
+
     document.getElementById('auth-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      doAuth('login');
+      if (authMode === 'login') doLogin(); else doRegister();
     });
-    document.getElementById('btn-register').addEventListener('click', () => doAuth('register'));
+
+    document.getElementById('link-to-register').addEventListener('click', (e) => {
+      e.preventDefault();
+      setAuthMode(authMode === 'login' ? 'register' : 'login');
+    });
   }
 
-  async function doAuth(action) {
+  function setAuthMode(mode) {
+    authMode = mode;
     showAuthError('');
+    showAuthSuccess('');
+    const btn = document.getElementById('btn-auth');
+    const switchEl = document.getElementById('auth-switch');
+    if (mode === 'register') {
+      btn.textContent = '注册';
+      switchEl.innerHTML = '已有账号？<a href="#" id="link-to-register">返回登录</a>';
+    } else {
+      btn.textContent = '登录';
+      switchEl.innerHTML = '没有账号？<a href="#" id="link-to-register">点击注册</a>';
+    }
+    document.getElementById('link-to-register').addEventListener('click', (e) => {
+      e.preventDefault();
+      setAuthMode(authMode === 'login' ? 'register' : 'login');
+    });
+  }
+
+  async function doLogin() {
+    showAuthError('');
+    showAuthSuccess('');
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-pass').value;
     if (!email || !password) return showAuthError('请输入邮箱和密码');
 
     try {
-      let result;
-      if (action === 'register') {
-        result = await supabase.auth.signUp({ email, password });
-      } else {
-        result = await supabase.auth.signInWithPassword({ email, password });
+      const result = await supabase.auth.signInWithPassword({ email, password });
+      if (result.error) {
+        if (result.error.message.includes('Invalid login')) {
+          return showAuthError('邮箱或密码错误。如果还没有账号，请点击下方"点击注册"');
+        }
+        return showAuthError(result.error.message);
       }
-
-      if (result.error) return showAuthError(result.error.message);
-
-      if (action === 'register' && !result.data.session) {
-        showAuthError('注册成功！请查收验证邮件后再登录。');
-        return;
-      }
-
       await bootApp(result.data.user);
+    } catch (e) {
+      showAuthError('网络错误，请重试');
+    }
+  }
+
+  async function doRegister() {
+    showAuthError('');
+    showAuthSuccess('');
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-pass').value;
+    if (!email || !password) return showAuthError('请输入邮箱和密码');
+    if (password.length < 6) return showAuthError('密码至少需要6位');
+
+    try {
+      const result = await supabase.auth.signUp({ email, password });
+      if (result.error) {
+        if (result.error.message.includes('already registered')) {
+          return showAuthError('该邮箱已注册，请直接登录');
+        }
+        return showAuthError(result.error.message);
+      }
+
+      if (result.data.session) {
+        await bootApp(result.data.user);
+      } else {
+        showAuthSuccess('注册成功！验证邮件已发送到 ' + email + '，请查收并点击邮件中的链接完成验证，然后返回登录。');
+        setAuthMode('login');
+      }
     } catch (e) {
       showAuthError('网络错误，请重试');
     }
